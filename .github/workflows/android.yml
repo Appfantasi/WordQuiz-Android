@@ -27,7 +27,11 @@ jobs:
         working-directory: wordquiz-estratto/wordquiz-android
         run: npm ci
 
-      - name: Sync web app to Android
+      - name: Add Android platform
+        working-directory: wordquiz-estratto/wordquiz-android
+        run: npx cap add android
+
+        - name: Sync web app to Android
         working-directory: wordquiz-estratto/wordquiz-android
         run: npx cap sync android
 

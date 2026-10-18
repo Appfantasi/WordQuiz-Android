@@ -24,12 +24,11 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Add Android platform
-        run: npx cap add android
+        working-directory: wordquiz-estratto/wordquiz-android
+        run: npm ci
 
       - name: Sync web app to Android
+        working-directory: wordquiz-estratto/wordquiz-android
         run: npx cap sync android
 
       - name: Set up Java
@@ -39,8 +38,8 @@ jobs:
           java-version: '21'
 
       - name: Build debug APK
+        working-directory: wordquiz-estratto/wordquiz-android/android
         run: |
-          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -48,6 +47,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WordQuiz-debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: wordquiz-estratto/wordquiz-android/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7

@@ -66,7 +66,7 @@ async function newGroup(name,lang){
 }
 function play(r){
   if(r.aud){try{new Audio(r.aud).play();return}catch(e){}}
-  if(r.w&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(r.w);u.lang=r.lang||'en-US';speechSynthesis.cancel();speechSynthesis.speak(u)}
+  if(r.w&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(r.w);u.lang='en-GB';speechSynthesis.cancel();speechSynthesis.speak(u)}
 }
 ['t0','t1','t2'].forEach((id,i)=>$(id).onclick=()=>[0,1,2].forEach(k=>{$('p'+k).classList.toggle('hide',k!==i);$('t'+k).classList.toggle('on',k===i)}));
 /* Gruppi */

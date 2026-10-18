@@ -1,52 +1,52 @@
 name: Build WordQuiz Android APK
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-
-permissions:
-  contents: read
-  actions: read
+workflow_dispatch:
+push:
+branches:
+- main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+build:
+runs-on: ubuntu-latest
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+defaults:
+  run:
+    working-directory: wordquiz-estratto/wordquiz-android
 
-      - name: Install dependencies
-        run: npm install
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
 
-      - name: Add Android platform
-        run: npx cap add android
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
 
-      - name: Sync web app to Android
-        run: npx cap sync android
+  - name: Setup Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: 21
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
+  - name: Install dependencies
+    run: npm ci
 
-      - name: Build debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+  - name: Add Android platform
+    run: npx cap add android
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: WordQuiz-debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 7
+  - name: Sync Android project
+    run: npx cap sync android
+
+  - name: Build APK
+    run: |
+      cd android
+      chmod +x gradlew
+      ./gradlew assembleDebug
+
+  - name: Upload APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: WordQuiz-APK
+      path: wordquiz-estratto/wordquiz-android/android/app/build/outputs/apk/debug/app-debug.apk
+      if-no-files-found: error

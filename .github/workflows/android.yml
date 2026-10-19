@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: wordquiz-estratto/wordquiz-android
-        run: npm ci
+        run: npm install
 
       - name: Add Android platform
         working-directory: wordquiz-estratto/wordquiz-android

@@ -220,23 +220,53 @@ function play(r) {
   speakText(r);
 }
 
-function speakText(r) {
-  if (!r || !String(r.w || '').trim()) {
-    return;
+async function speakText(r) {
+  if (!r || !String(r.w || '').trim()) return;
+
+  const wanted = String(r.lang || $('lang').value || 'en-GB').replace('_', '-');
+  const text = String(r.w).trim();
+  const requestId = ++speechRequest;
+
+  /*
+   * Nell'app Android usa il plugin Capacitor nativo, se disponibile.
+   * Nel browser continua a usare la Web Speech API.
+   */
+  const nativeTTS = window.WordQuizNativeTTS;
+  const isNativeApp = !!(
+    window.Capacitor &&
+    typeof window.Capacitor.isNativePlatform === 'function' &&
+    window.Capacitor.isNativePlatform()
+  );
+
+  if (isNativeApp && nativeTTS && typeof nativeTTS.speak === 'function') {
+    try {
+      if (typeof nativeTTS.stop === 'function') {
+        await nativeTTS.stop().catch(() => {});
+      }
+      if (requestId !== speechRequest) return;
+
+      await nativeTTS.speak({
+        text,
+        lang: wanted,
+        rate: 0.9,
+        pitch: 1.0,
+        volume: 1.0
+      });
+      return;
+    } catch (e) {
+      console.error('Sintesi vocale nativa non riuscita:', e);
+      alert('La voce Android non è riuscita. Controlla in Android le impostazioni di Sintesi vocale e che sia installata una voce per la lingua scelta.');
+      return;
+    }
   }
 
   const synth = window.speechSynthesis;
   const Utterance = window.SpeechSynthesisUtterance;
 
   if (!synth || !Utterance) {
-    alert('La sintesi vocale non è disponibile in questo ambiente. Controlla le impostazioni vocali di Android.');
+    alert('Sintesi vocale non disponibile. Nell’app Android verifica che il plugin TTS sia incluso nella compilazione e che Android abbia una voce installata per la lingua scelta.');
     return;
   }
-
-  const wanted = String(r.lang || $('lang').value || 'en-GB')
-    .replace('_', '-');
-
-  const requestId = ++speechRequest;
 
   try {
     synth.cancel();
@@ -244,7 +274,7 @@ function speakText(r) {
     const speak = () => {
       if (requestId !== speechRequest) return;
 
-      const utterance = new Utterance(String(r.w).trim());
+      const utterance = new Utterance(text);
       utterance.lang = wanted;
       utterance.rate = 0.9;
       utterance.pitch = 1;
@@ -253,20 +283,14 @@ function speakText(r) {
       const voices = synth.getVoices() || [];
       const language = wanted.toLowerCase();
       const baseLanguage = language.split('-')[0];
-
-      const exact = voices.filter(v =>
-        v.lang && v.lang.toLowerCase() === language
-      );
-
+      const exact = voices.filter(v => v.lang && v.lang.toLowerCase() === language);
       const sameLanguage = voices.filter(v =>
         v.lang && v.lang.toLowerCase().startsWith(baseLanguage)
       );
-
       const candidates = exact.length ? exact : sameLanguage;
 
       if (candidates.length) {
         let preferred = null;
-
         if (language === 'en-gb') {
           preferred = candidates.find(v =>
             /en[-_]gb|british|united kingdom|uk english/i.test(
@@ -274,7 +298,6 @@ function speakText(r) {
             )
           );
         }
-
         utterance.voice = preferred || candidates[0];
         utterance.lang = utterance.voice.lang || wanted;
       }
@@ -291,24 +314,19 @@ function speakText(r) {
       }
     };
 
-    /* Su alcuni dispositivi le voci vengono caricate in ritardo. */
-    let voices = synth.getVoices();
-
+    const voices = synth.getVoices();
     if (voices && voices.length) {
       speak();
     } else {
       let finished = false;
-
       const onVoicesChanged = () => {
         if (finished || requestId !== speechRequest) return;
         finished = true;
         synth.removeEventListener('voiceschanged', onVoicesChanged);
         speak();
       };
-
       synth.addEventListener('voiceschanged', onVoicesChanged);
 
-      /* Secondo tentativo nel caso in cui l'evento non arrivi. */
       setTimeout(() => {
         if (finished || requestId !== speechRequest) return;
         finished = true;
@@ -533,7 +551,18 @@ async function toggleRec(r, btn) {
     btn.textContent = '⏹ Stop';
     btn.classList.add('pri');
   } catch (e) {
-    alert('Microfono non disponibile. Puoi usare “Audio” per scegliere un file.');
+    console.error('Errore accesso microfono:', e);
+    let msg = 'Microfono non disponibile.';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      msg += ' Questa WebView non espone getUserMedia: occorre abilitare i permessi microfono nel progetto Android e ricompilare l’APK.';
+    } else if (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')) {
+      msg += ' Permesso negato: abilita il microfono per WordQuiz nelle impostazioni Android.';
+    } else if (e && e.name === 'NotFoundError') {
+      msg += ' Non è stato trovato un microfono disponibile.';
+    } else {
+      msg += ' Controlla i permessi Android e riprova. Puoi anche usare “Audio” per scegliere un file.';
+    }
+    alert(msg);
   }
 }
 

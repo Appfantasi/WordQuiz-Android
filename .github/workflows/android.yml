@@ -1,3 +1,4 @@
+
 name: Build WordQuiz Android APK
 
 on:
@@ -9,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +35,12 @@ jobs:
       - name: Add Android platform
         working-directory: wordquiz-estratto/wordquiz-android
         run: npx cap add android
+
+      - name: Add microphone permissions
+        working-directory: wordquiz-estratto/wordquiz-android
+        run: |
+          sed -i '/<application/i\    <uses-permission android:name="android.permission.RECORD_AUDIO" />' android/app/src/main/AndroidManifest.xml
+          sed -i '/<application/i\    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />' android/app/src/main/AndroidManifest.xml
 
       - name: Sync Android project
         working-directory: wordquiz-estratto/wordquiz-android

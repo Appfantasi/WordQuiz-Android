@@ -1,0 +1,108 @@
+
+name: Build WordQuiz Windows
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/windows.yml"
+      - "wordquiz-estratto/wordquiz-android/www/**"
+      - "wordquiz-estratto/wordquiz-android/package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v5
+
+      - name: Install Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Prepare Windows application
+        shell: pwsh
+        working-directory: wordquiz-estratto/wordquiz-android
+        run: |
+          @'
+          {
+            "name": "wordquiz-windows",
+            "version": "1.0.0",
+            "private": true,
+            "description": "WordQuiz for Windows",
+            "main": "main.cjs",
+            "scripts": {
+              "dist": "electron-builder --win nsis"
+            },
+            "devDependencies": {
+              "electron": "^39.0.0",
+              "electron-builder": "^26.0.0"
+            },
+            "build": {
+              "appId": "it.wordquiz.app",
+              "productName": "WordQuiz",
+              "files": [
+                "main.cjs",
+                "www/**/*",
+                "package.json"
+              ],
+              "win": {
+                "target": "nsis"
+              },
+              "nsis": {
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true
+              }
+            }
+          }
+          '@ | Set-Content -Encoding utf8 package.json
+
+          @'
+          const { app, BrowserWindow, session } = require('electron');
+          const path = require('path');
+
+          app.whenReady().then(async () => {
+            session.defaultSession.setPermissionRequestHandler(
+              (_webContents, permission, callback) => {
+                callback(['media', 'microphone', 'audioCapture'].includes(permission));
+              }
+            );
+
+            const win = new BrowserWindow({
+              width: 1100,
+              height: 800,
+              minWidth: 800,
+              minHeight: 600,
+              title: 'WordQuiz',
+              webPreferences: {
+                contextIsolation: true,
+                nodeIntegration: false
+              }
+            });
+
+            await win.loadFile(path.join(__dirname, 'www', 'index.html'));
+          });
+
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') app.quit();
+          });
+          '@ | Set-Content -Encoding utf8 main.cjs
+
+          npm install
+
+      - name: Build Windows installer
+        working-directory: wordquiz-estratto/wordquiz-android
+        run: npm run dist
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v6
+        with:
+          name: WordQuiz-Windows-Installer
+          path: wordquiz-estratto/wordquiz-android/dist/*.exe
+          if-no-files-found: error
+          retention-days: 14

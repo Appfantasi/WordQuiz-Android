@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2f6fed">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default"> 
 <title>WordQuiz</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f5f1;--card:#fff;--tx:#1f2328;--mu:#6b7280;--ac:#2f6fed;--ok:#1a8a4a;--ko:#c6362c;--bd:#dcdad2}
@@ -952,6 +956,16 @@ loadGroups().catch(e => {
     '<p class="ko" style="padding:12px">Archivio non disponibile in questo browser.</p>'
   );
 });
+</script>
+  
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+      console.error('Registrazione service worker fallita:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>

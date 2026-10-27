@@ -1,0 +1,22 @@
+
+{
+  "id": "./",
+  "name": "WordQuiz",
+  "short_name": "WordQuiz",
+  "description": "Esercizi e quiz per imparare le lingue.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f5f1",
+  "theme_color": "#2f6fed",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
